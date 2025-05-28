@@ -2,7 +2,7 @@ name: Daily User Report
 
 on:
   schedule:
-    - cron: '0 12 * * *'  # 8AM Toronto (UTC-4 = 12 UTC)
+    - cron: '0 12 * * *'  # 8AM Toronto time (UTC-4 = 12 UTC)
   workflow_dispatch:
 
 jobs:
@@ -21,9 +21,13 @@ jobs:
       - name: Install dependencies
         run: pip install psycopg2-binary
 
-      - name: Start SSH tunnel
+      - name: Add SSH host to known_hosts
         run: |
           mkdir -p ~/.ssh
+          ssh-keyscan ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Start SSH tunnel
+        run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh -f -N -L 5433:semi-prod-db.postgres.database.azure.com:5432 \
