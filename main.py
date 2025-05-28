@@ -56,7 +56,10 @@ filename = "daily_user_report.csv"
 with open(filename, mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['First Name', 'Last Name', 'Email', 'Phone Number', 'Company', 'Registration Timestamp'])
-    writer.writerows(rows)
+    for row in rows:
+            formatted = list(row)
+            formatted[5] = row[5].strftime('%Y-%m-%d %H:%M:%S')  # Format datetime
+            writer.writerow(formatted)
 
 # Create email
 msg = MIMEMultipart()
