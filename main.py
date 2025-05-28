@@ -1,40 +1,41 @@
 import psycopg2
 import smtplib
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 import csv
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 
-# ENV Variables
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
-EMAIL_TO = os.getenv("EMAIL_TO")
+# Environment variables (from GitHub Actions)
+DB_NAME = os.environ['DB_NAME']
+DB_USER = os.environ['DB_USER']
+DB_PASSWORD = os.environ['DB_PASSWORD']
+EMAIL_USER = os.environ['EMAIL_USER']
+EMAIL_PASSWORD = os.environ['EMAIL_PASSWORD']
+EMAIL_TO = os.environ['EMAIL_TO']
 
-# DB Connection via SSH tunnel (localhost)
+# DB connection
 conn = psycopg2.connect(
     dbname=DB_NAME,
     user=DB_USER,
     password=DB_PASSWORD,
-    host="localhost",  # SSH tunnel forwards remote DB to localhost
-    port="5433"         # Forwarded port in GitHub Actions
+    host='127.0.0.1',
+    port='5433'  # Tunnels Azure PostgreSQL port 5432 to localhost:5433
 )
 cur = conn.cursor()
 
-# Query for last 24 hours
+# Query for users in last 24 hours
 cur.execute("""
     SELECT
         u.first_name,
         u.last_name,
         u.email,
         u.phonenumber,
-        u."createdAt",
-        c.company_name
+        c.company_name,
+        u."createdAt"
     FROM
         epp.users u
     JOIN
@@ -46,34 +47,57 @@ cur.execute("""
     ORDER BY
         u."createdAt" DESC
 """)
-
 rows = cur.fetchall()
-filename = "daily_user_report.csv"
+cur.close()
+conn.close()
 
-# Write CSV
+# Write to CSV
+filename = "daily_user_report.csv"
 with open(filename, mode='w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(['First Name', 'Last Name', 'Email', 'Phone', 'Created At', 'Company'])
+    writer.writerow(['First Name', 'Last Name', 'Email', 'Phone Number', 'Company', 'Registration Timestamp'])
     writer.writerows(rows)
 
-# Compose email
+# Create email
 msg = MIMEMultipart()
 msg['From'] = EMAIL_USER
 msg['To'] = EMAIL_TO
-msg['Subject'] = "📋 Daily User Report (CSV Attached)"
+msg['Subject'] = "📥 Daily Report: New Users Registered to the SEMI Portal"
+
+# Email body
+body = """\
+Hi,
+
+Please find attached the daily report of users who registered to the SEMI Portal in the past 24 hours.
+
+The attached CSV file includes the following details for each user:
+- First Name
+- Last Name
+- Email Address
+- Phone Number
+- Registration Timestamp
+- Associated Company
+
+This report is auto-generated and sent daily at 8:00 AM (Toronto Time).
+If you have any questions or need additional information, feel free to reach out.
+
+Best regards,  
+Kaushik
+"""
+msg.attach(MIMEText(body, "plain"))
 
 # Attach CSV
 with open(filename, "rb") as attachment:
     part = MIMEBase("application", "octet-stream")
     part.set_payload(attachment.read())
     encoders.encode_base64(part)
-    part.add_header("Content-Disposition", f"attachment; filename={filename}")
+    part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(filename)}")
     msg.attach(part)
 
 # Send email via Gmail SMTP
 with smtplib.SMTP("smtp.gmail.com", 587) as server:
     server.starttls()
-    server.login(EMAIL_USER, EMAIL_PASSWORD)  # Gmail App Password
+    server.login(EMAIL_USER, EMAIL_PASSWORD)
     server.send_message(msg)
 
-print("✅ Report sent successfully.")
+print("✅ Email with user report sent successfully.")
