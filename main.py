@@ -43,7 +43,7 @@ cur.execute("""
     JOIN
         epp.company c ON ucr.company_id = c.id
     WHERE
-        u."createdAt" >= NOW() - INTERVAL '900 hours'
+        u."createdAt" >= NOW() - INTERVAL '24 hours'
     ORDER BY
         u."createdAt" DESC
 """)
