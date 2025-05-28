@@ -43,7 +43,7 @@ cur.execute("""
     JOIN
         epp.company c ON ucr.company_id = c.id
     WHERE
-        u."createdAt" >= NOW() - INTERVAL '24 hours'
+        u."createdAt" >= NOW() - INTERVAL '900 hours'
     ORDER BY
         u."createdAt" DESC
 """)
@@ -62,7 +62,7 @@ with open(filename, mode='w', newline='') as file:
 msg = MIMEMultipart()
 msg['From'] = EMAIL_USER
 msg['To'] = EMAIL_TO
-msg['Subject'] = "📥 Daily Report: New Users Registered to the SEMI Portal"
+msg['Subject'] = "Daily Report: New Users Registered to the SEMI Portal"
 
 # Email body
 body = """\
@@ -75,8 +75,8 @@ The attached CSV file includes the following details for each user:
 - Last Name
 - Email Address
 - Phone Number
-- Registration Timestamp
 - Associated Company
+- Registration Timestamp
 
 This report is auto-generated and sent daily at 8:00 AM (Toronto Time).
 If you have any questions or need additional information, feel free to reach out.
