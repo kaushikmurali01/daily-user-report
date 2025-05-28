@@ -32,7 +32,7 @@ cur.execute("""
         u.first_name,
         u.last_name,
         u.email,
-        u.phone_number,
+        u.phonenumber,
         u."createdAt",
         c.company_name
     FROM
