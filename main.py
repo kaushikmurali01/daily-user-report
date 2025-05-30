@@ -56,7 +56,7 @@ conn.close()
 filename = "daily_user_report.csv"
 with open(filename, mode='w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(['First Name', 'Last Name', 'Email', 'Phone Number', 'Company', 'Registration Timestamp'])
+    writer.writerow(['ID', 'First Name', 'Last Name', 'Email', 'Phone Number', 'Company', 'Registration Timestamp'])
     for row in rows:
             formatted = list(row)
             formatted[6] = row[6].strftime('%Y-%m-%d %H:%M:%S')  # Format datetime
@@ -75,6 +75,7 @@ Hi,
 Please find attached the daily report of users who registered to the SEMI Portal in the past 24 hours.
 
 The attached CSV file includes the following details for each user:
+- User ID
 - First Name
 - Last Name
 - Email Address
