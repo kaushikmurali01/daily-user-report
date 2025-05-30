@@ -30,6 +30,7 @@ cur = conn.cursor()
 # Query for users in last 24 hours
 cur.execute("""
     SELECT
+        u.id,
         u.first_name,
         u.last_name,
         u.email,
